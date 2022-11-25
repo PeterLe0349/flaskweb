@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, escape
 from vsearch import search4letters
-
+import variables
 
 app = Flask(__name__)
 
@@ -18,9 +18,35 @@ def do_search() -> 'html':
 def entry_page() -> 'html':
     return render_template('entry.html', the_title='Welcome to search4letters on the web!')
 
+# def log_request(req: 'flask_request', res: str) -> None:
+#     with open('vsearch.log', 'a') as log:
+#         print(req.form, req.remote_addr, req.user_agent, res, file=log, sep='|')
+
 def log_request(req: 'flask_request', res: str) -> None:
-    with open('vsearch.log', 'a') as log:
-        print(req.form, req.remote_addr, req.user_agent, res, file=log, sep='|')
+    dbconfig = {
+        'host': '127.0.0.1',
+        'user': variables.user_name,
+        'password': variables.user_pass,
+        'database': 'vsearchlogDB',
+    }
+    import mysql.connector
+    conn = mysql.connector.connect(**dbconfig)
+    cursor = conn.cursor()
+    _SQL = """insert into log
+    (phrase, letters, ip, browser_string, results)
+    values
+    (%s, %s, %s, %s, %s)"""
+    print(req.user_agent.browser)
+    cursor.execute(_SQL, (req.form['phrase'],
+                   req.form['letters'],
+                   req.remote_addr,
+                   str(req.user_agent),
+                   res,))
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+
 
 @app.route('/viewlog')
 def view_the_log() -> 'html':
@@ -36,4 +62,5 @@ def view_the_log() -> 'html':
                            the_row_titles = titles,
                            the_data = contents,)
 
-app.run()
+if __name__ == '__main__':
+    app.run(debug=True)

@@ -10,3 +10,4 @@
 /.idea
 /artifacts
 *.iml
+variables.py
