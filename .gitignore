@@ -11,3 +11,4 @@
 /artifacts
 *.iml
 variables.py
+*.pyc
